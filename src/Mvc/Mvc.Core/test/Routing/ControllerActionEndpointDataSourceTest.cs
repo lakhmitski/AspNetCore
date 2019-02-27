@@ -175,7 +175,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
 
         private protected override ActionEndpointDataSourceBase CreateDataSource(IActionDescriptorCollectionProvider actions, ActionEndpointFactory endpointFactory)
         {
-            return new ControllerActionEndpointDataSource(actions, endpointFactory);
+            return new ControllerActionEndpointDataSource(actions, endpointFactory, );
         }
 
         protected override ActionDescriptor CreateActionDescriptor(
