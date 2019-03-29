@@ -19,6 +19,9 @@
     function loadBootScript(event) {
         event.srcElement.disabled = true;
         var scriptElem = document.createElement('script');
+        scriptElem.onload = function () {
+            Blazor.start();
+        };
         scriptElem.src = '_framework/components.server.js';
         document.body.appendChild(scriptElem);
     }

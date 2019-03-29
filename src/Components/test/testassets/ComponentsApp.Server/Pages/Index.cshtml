@@ -15,5 +15,12 @@
     <app>@(await Html.RenderComponentAsync<App>())</app>
 
     <script src="_framework/components.server.js"></script>
+    <script>
+        Blazor.start({
+            configureSignalR: function (builder) {
+                builder.configureLogging(2); // LogLevel.Information
+            }
+        });
+    </script>
 </body>
 </html>

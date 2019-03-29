@@ -5,11 +5,19 @@ import { MessagePackHubProtocol } from '@aspnet/signalr-protocol-msgpack';
 import { OutOfProcessRenderBatch } from './Rendering/RenderBatch/OutOfProcessRenderBatch';
 import { internalFunctions as uriHelperFunctions } from './Services/UriHelper';
 import { renderBatch } from './Rendering/Renderer';
-import { fetchBootConfigAsync, loadEmbeddedResourcesAsync } from './BootCommon';
+import { fetchBootConfigAsync, loadEmbeddedResourcesAsync, autoStartIfApplicable } from './BootCommon';
 import { CircuitHandler } from './Platform/Circuits/CircuitHandler';
 import { AutoReconnectCircuitHandler } from './Platform/Circuits/AutoReconnectCircuitHandler';
 
-async function boot() {
+let started = false;
+
+async function boot(options?: any) {
+
+  if (started) {
+    throw new Error('Blazor has already started.');
+  }
+  started = true;
+
   const circuitHandlers: CircuitHandler[] = [ new AutoReconnectCircuitHandler() ];
   window['Blazor'].circuitHandlers = circuitHandlers;
 
@@ -18,7 +26,9 @@ async function boot() {
     return loadEmbeddedResourcesAsync(bootConfig);
   });
 
-  const initialConnection = await initializeConnection(circuitHandlers);
+  // pass options.configureSignalR to configure the signalR.HubConnectionBuilder
+  const configureSignalR = (options || {}).configureSignalR
+  const initialConnection = await initializeConnection(configureSignalR, circuitHandlers);
 
   // Ensure any embedded resources have been loaded before starting the app
   await embeddedResourcesPromise;
@@ -29,7 +39,7 @@ async function boot() {
   );
 
   window['Blazor'].reconnect = async () => {
-    const reconnection = await initializeConnection(circuitHandlers);
+    const reconnection = await initializeConnection(configureSignalR, circuitHandlers);
     if (!(await reconnection.invoke<Boolean>('ConnectCircuit', circuitId))) {
       return false;
     }
@@ -41,14 +51,18 @@ async function boot() {
   circuitHandlers.forEach(h => h.onConnectionUp && h.onConnectionUp());
 }
 
-async function initializeConnection(circuitHandlers: CircuitHandler[]): Promise<signalR.HubConnection> {
+async function initializeConnection(configureSignalR: (builder: signalR.HubConnectionBuilder) => void, circuitHandlers: CircuitHandler[]): Promise<signalR.HubConnection> {
   const hubProtocol = new MessagePackHubProtocol();
   (hubProtocol as any).name = 'blazorpack';
-  const connection = new signalR.HubConnectionBuilder()
+  const connectionBuilder = new signalR.HubConnectionBuilder()
     .withUrl('_blazor')
-    .withHubProtocol(hubProtocol)
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
+    .withHubProtocol(hubProtocol);
+
+  if (configureSignalR) {
+    configureSignalR(connectionBuilder);
+  }
+
+  const connection = connectionBuilder.build();
 
   connection.on('JS.BeginInvokeJS', DotNet.jsCallDispatcher.beginInvokeJSFromDotNet);
   connection.on('JS.RenderBatch', (browserRendererId: number, renderId: number, batchData: Uint8Array) => {
@@ -93,4 +107,5 @@ function unhandledError(connection: signalR.HubConnection, err: Error) {
   }
 }
 
-boot();
+window['Blazor'].start = boot;
+autoStartIfApplicable(boot);
