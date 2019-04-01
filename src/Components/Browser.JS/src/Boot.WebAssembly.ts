@@ -6,7 +6,7 @@ import { getAssemblyNameFromUrl } from './Platform/Url';
 import { renderBatch } from './Rendering/Renderer';
 import { SharedMemoryRenderBatch } from './Rendering/RenderBatch/SharedMemoryRenderBatch';
 import { Pointer } from './Platform/Platform';
-import { fetchBootConfigAsync, loadEmbeddedResourcesAsync, autoStartIfApplicable } from './BootCommon';
+import { fetchBootConfigAsync, loadEmbeddedResourcesAsync, shouldAutoStart } from './BootCommon';
 
 let started = false;
 
@@ -52,4 +52,6 @@ async function boot(options?: any) {
 }
 
 window['Blazor'].start = boot;
-autoStartIfApplicable(boot);
+if (shouldAutoStart()) {
+  boot();
+}

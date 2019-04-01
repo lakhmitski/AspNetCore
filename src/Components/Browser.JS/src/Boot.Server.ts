@@ -5,13 +5,18 @@ import { MessagePackHubProtocol } from '@aspnet/signalr-protocol-msgpack';
 import { OutOfProcessRenderBatch } from './Rendering/RenderBatch/OutOfProcessRenderBatch';
 import { internalFunctions as uriHelperFunctions } from './Services/UriHelper';
 import { renderBatch } from './Rendering/Renderer';
-import { fetchBootConfigAsync, loadEmbeddedResourcesAsync, autoStartIfApplicable } from './BootCommon';
+import { fetchBootConfigAsync, loadEmbeddedResourcesAsync, shouldAutoStart } from './BootCommon';
 import { CircuitHandler } from './Platform/Circuits/CircuitHandler';
 import { AutoReconnectCircuitHandler } from './Platform/Circuits/AutoReconnectCircuitHandler';
 
+type SignalRBuilder = (builder: signalR.HubConnectionBuilder) => void;
+type BlazorOptions = {
+  configureSignalR: SignalRBuilder | null,
+};
+
 let started = false;
 
-async function boot(options?: any) {
+async function boot(options?: BlazorOptions | null) {
 
   if (started) {
     throw new Error('Blazor has already started.');
@@ -27,7 +32,7 @@ async function boot(options?: any) {
   });
 
   // pass options.configureSignalR to configure the signalR.HubConnectionBuilder
-  const configureSignalR = (options || {}).configureSignalR
+  const configureSignalR = (options && options.configureSignalR) || null;
   const initialConnection = await initializeConnection(configureSignalR, circuitHandlers);
 
   // Ensure any embedded resources have been loaded before starting the app
@@ -51,7 +56,7 @@ async function boot(options?: any) {
   circuitHandlers.forEach(h => h.onConnectionUp && h.onConnectionUp());
 }
 
-async function initializeConnection(configureSignalR: (builder: signalR.HubConnectionBuilder) => void, circuitHandlers: CircuitHandler[]): Promise<signalR.HubConnection> {
+async function initializeConnection(configureSignalR: SignalRBuilder | null, circuitHandlers: CircuitHandler[]): Promise<signalR.HubConnection> {
   const hubProtocol = new MessagePackHubProtocol();
   (hubProtocol as any).name = 'blazorpack';
   const connectionBuilder = new signalR.HubConnectionBuilder()
@@ -108,4 +113,6 @@ function unhandledError(connection: signalR.HubConnection, err: Error) {
 }
 
 window['Blazor'].start = boot;
-autoStartIfApplicable(boot);
+if (shouldAutoStart()) {
+  boot();
+}

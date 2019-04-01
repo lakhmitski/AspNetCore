@@ -38,12 +38,10 @@ interface BootJsonData {
   linkerEnabled: boolean;
 }
 
-// calls Blazor.start() if the script was added with <script src="..." start></script>
-export function autoStartIfApplicable(start: (options?: any)=> Promise<void>) {
-  if (document &&
+// Tells you if the script was added with <script src="..." start></script>
+export function shouldAutoStart() {
+  return document &&
     document.currentScript &&
-    document.currentScript.hasAttribute("start") &&
-    document.currentScript.getAttribute("start") !== "false") {
-      start();
-  }
+    document.currentScript.hasAttribute('start') &&
+    document.currentScript.getAttribute('start') !== 'false';
 }
