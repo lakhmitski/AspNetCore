@@ -10,13 +10,13 @@ import { CircuitHandler } from './Platform/Circuits/CircuitHandler';
 import { AutoReconnectCircuitHandler } from './Platform/Circuits/AutoReconnectCircuitHandler';
 
 type SignalRBuilder = (builder: signalR.HubConnectionBuilder) => void;
-type BlazorOptions = {
-  configureSignalR: SignalRBuilder | null,
+interface BlazorOptions {
+  configureSignalR?: SignalRBuilder,
 };
 
 let started = false;
 
-async function boot(options?: BlazorOptions | null) {
+async function boot(options?: BlazorOptions) {
 
   if (started) {
     throw new Error('Blazor has already started.');
@@ -57,11 +57,9 @@ async function boot(options?: BlazorOptions | null) {
 }
 
 async function initializeConnection(configureSignalR: SignalRBuilder | null, circuitHandlers: CircuitHandler[]): Promise<signalR.HubConnection> {
-  const hubProtocol = new MessagePackHubProtocol();
-  (hubProtocol as any).name = 'blazorpack';
   const connectionBuilder = new signalR.HubConnectionBuilder()
     .withUrl('_blazor')
-    .withHubProtocol(hubProtocol);
+    .withHubProtocol(new MessagePackHubProtocol());
 
   if (configureSignalR) {
     configureSignalR(connectionBuilder);
