@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Basic test app</title>
-    <base href="/subdir/" />    
+    <base href="/subdir/" />
     <link href="style.css" rel="stylesheet" />
 </head>
 <body>
@@ -26,7 +26,7 @@
       var src = location.hash === '#server'
         ? 'components.server.js'
         : 'components.webassembly.js';
-      document.write('<script src="_framework/' + src + '" start><' + '/script>');
+      document.write('<script src="_framework/' + src + '"><' + '/script>');
     })();
   </script>
 </body>

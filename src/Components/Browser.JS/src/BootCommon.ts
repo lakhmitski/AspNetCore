@@ -38,10 +38,9 @@ interface BootJsonData {
   linkerEnabled: boolean;
 }
 
-// Tells you if the script was added with <script src="..." start></script>
+// Tells you if the script was added without <script src="..." autostart="false"></script>
 export function shouldAutoStart() {
   return document &&
     document.currentScript &&
-    document.currentScript.hasAttribute('start') &&
-    document.currentScript.getAttribute('start') !== 'false';
+    document.currentScript.getAttribute('autostart') !== 'false';
 }

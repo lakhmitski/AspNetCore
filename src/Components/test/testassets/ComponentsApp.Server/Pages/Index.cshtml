@@ -14,7 +14,7 @@
 <body>
     <app>@(await Html.RenderComponentAsync<App>())</app>
 
-    <script src="_framework/components.server.js"></script>
+    <script src="_framework/components.server.js" autostart="false"></script>
     <script>
         Blazor.start({
             configureSignalR: function (builder) {
